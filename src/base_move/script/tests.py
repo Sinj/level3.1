@@ -14,15 +14,15 @@ def callback(data):
         if data.status.status >2: #if the robot failed/succeded in reaching goal store the result
             i = data.status.status
             
-def coords(x,y,z,w):#function to publish the movement coords to robot
-    pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)#where it is publishing to
-    message = PoseStamped()
-    message.header.frame_id = '/map'
-    message.pose.position.x = x
-    message.pose.position.y = y
-    message.pose.orientation.z = z
-    message.pose.orientation.w = w
-    pub.publish(message)
+#def coords(x,y,z,w):#function to publish the movement coords to robot
+#    pub = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)#where it is publishing to
+#    message = PoseStamped()
+#    message.header.frame_id = '/map'
+#    message.pose.position.x = x
+#    message.pose.position.y = y
+#    message.pose.orientation.z = z
+#    message.pose.orientation.w = w
+#    pub.publish(message)
     
 #def makeclient():
 #    rospy.loginfo("Creating base movement client.")
@@ -60,6 +60,7 @@ def robot_base():
     baseClient = actionlib.SimpleActionClient('move_base',move_base_msgs.msg.MoveBaseAction)
     baseClient.wait_for_server()#
     rospy.loginfo("stopped waiting.")
+    
        
 # Below is the open and read file   "/home/sinj/robot/src/base_move/script/cords.txt"
     cord=[]
@@ -70,8 +71,12 @@ def robot_base():
     target = makegoal(cord[k],cord[k+1],cord[k+2],cord[k+3])
     print "sending goal"
     baseClient.send_goal(target)
+
     print "goal sent"
-    r.sleep(4)
+    
+    t = baseClient.get_state()
+    print t
+    
     print'goal coords: X:{} Y:{} Z:{} W:{} and there are {} waypoints'.format(cord[0],cord[1],cord[2],cord[3], (len(cord)/4))
 
 #    while not rospy.is_shutdown():
