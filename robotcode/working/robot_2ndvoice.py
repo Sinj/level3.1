@@ -77,7 +77,7 @@ def robot_base():
     maryclient.send_goal_and_wait(speak)
     print'Going to start at coords: X:{} Y:{} Z:{} W:{} and there are {} waypoints'.format(cord[0],cord[1],cord[2],cord[3], (len(cord)/4)-1)
     speak.text = speakarray[1]  #inform them of action              
-    maryclient.send_goal(speak)
+    maryclient.send_goal_and_wait(speak) 
     baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
                                                        cord[k+2],cord[k+3]))
     speak.text = speakarray[2]   #ask them to move behind robot             
@@ -88,7 +88,7 @@ def robot_base():
         if end == False:        
             if robotstate <3:
                 speak.text = speakarray[random.randint(3,7)]                
-                maryclient.send_goal(speak)
+                maryclient.send_goal_and_wait(speak) 
                 ptuclient.send_goal_and_wait(ptuforward)
                 print("moving to goal") 
                 baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
@@ -98,13 +98,13 @@ def robot_base():
             if robotstate == 3:
                 print'goal reached, waiting for human. \nCurrently at waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))
                 speak.text = speakarray[random.randint(8,10)]                
-                maryclient.send_goal(speak)                
+                maryclient.send_goal_and_wait(speak)                 
                 sqrt = 0.0
                 waitForHuman = True
                 timer = time.time()
                 robotstate=0
                 speak.text = speakarray[random.randint(11,13)]                
-                maryclient.send_goal(speak)
+                maryclient.send_goal_and_wait(speak) 
                 ptuclient.send_goal_and_wait(ptubwrd)                
                 while waitForHuman:                  
                     print "waiting for {:.2f} seconds ".format(((timer+robotWaitTime) - time.time()))
@@ -116,7 +116,7 @@ def robot_base():
                         if len(cord)-1 > k+4: 
                            sqrt = 0.0
                            speak.text = speakarray[random.randint(18,21)]                
-                           maryclient.send_goal(speak)
+                           maryclient.send_goal_and_wait(speak) 
                            k = k +4 #move index to next set of cords
                            print'next goal coords: X:{} Y:{} Z:{} W:{}'.format(cord[k],cord[k+1],cord[k+2],cord[k+3])
                            print'moving to waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))                          
@@ -136,10 +136,10 @@ def robot_base():
                              print'next goal coords: X:{} Y:{} Z:{} W:{}'.format(cord[k],cord[k+1],cord[k+2],cord[k+3])
                              print'moving back to prior waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))
                              speak.text = speakarray[random.randint(25,26)]                
-                             maryclient.send_goal(speak)
+                             maryclient.send_goal_and_wait(speak) 
                          else:
                              speak.text = speakarray[27]                
-                             maryclient.send_goal(speak)                             
+                             maryclient.send_goal_and_wait(speak)                              
                              print 'no human is following robot, will go back to start' 
                              end = True
                          waitForHuman = False
