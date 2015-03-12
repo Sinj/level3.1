@@ -27,10 +27,11 @@ def makegoal(x,y,z,w): #makes move goal & return it
 
 def wherehuman(data):
     #get the euclidean distance the humans is away from  the robot and store it  
-    print data
+    #print data
     global sqrt
     toBeSqrt = (data.pose.position.x * data.pose.position.x) + (data.pose.position.y * data.pose.position.y)   
     sqrt = math.sqrt(toBeSqrt)
+      
     
 def rotatehead(x):
      pub = rospy.Publisher('/head/commanded_state', JointState)       
@@ -45,24 +46,27 @@ def rotatehead(x):
 def robot_base():
     rospy.init_node('robot_base', anonymous=True)
     r = rospy.Rate(0.3) # .3hz
-    cordsfile = '/cords4.txt'
+    cordsfile = '/cords5.txt'
     speakfile = '/tospeak.txt'
     global sqrt
     robotstate = 0          # holds the state of the robot
     k=0                     # The index for cords
     end = False             # signal for the end for the program
+    seekinghuman = True
+    out = 0
     humanMaxDistance = 3.5  # stores max distance the human can be from the robot
     humanMinDistance = 0.5  # stores min distance the human can be from the robot
     robotWaitTime = 20.0    # in seconds
+    robotquickWaitTime = 10 # in seconds
     
         #make client
-    print"making clients"
+    print"making move clients"
     baseClient = actionlib.SimpleActionClient('move_base',move_base_msgs.msg.MoveBaseAction)
     baseClient.wait_for_server()#
-        #make PTU client
-    ptuclient = actionlib.SimpleActionClient('SetPTUState',flir_pantilt_d46.msg.PtuGotoAction)    
-    ptuclient.wait_for_server()
-        #Make speaking client
+    print"making ptu clients"        #make PTU client
+    #ptuclient = actionlib.SimpleActionClient('SetPTUState',flir_pantilt_d46.msg.PtuGotoAction)    
+    #ptuclient.wait_for_server()
+    print"making speaking clients"       #Make speaking client
     maryclient = actionlib.SimpleActionClient('speak',mary_tts.msg.maryttsAction)    
     maryclient.wait_for_server()
         #face foward PTU goal 
@@ -82,62 +86,107 @@ def robot_base():
     for line in open(os.path.dirname(os.path.realpath(__file__)) + cordsfile):
        cord.append(np.array([float(val) for val in line.rstrip('\n').split(' ') if val != '']))
        
-    print "reading cords from {}".format(speakfile)           
+    print "reading speaking text from {}".format(speakfile)           
     with open(os.path.dirname(os.path.realpath(__file__)) + speakfile, "r") as f:
         speakarray = map(str.rstrip, f)        
             
     speak.text = speakarray[0]  # great people              
     maryclient.send_goal_and_wait(speak)
-    print'Going to start at coords: X:{} Y:{} Z:{} W:{} and there are {} waypoints'.format(cord[0],cord[1],cord[2],cord[3], (len(cord)/4)-1)
+    print'Going to start at coords: X:{} Y:{} Z:{} W:{} and there are {} waypoints'.format(cord[0],cord[1],cord[2],cord[3], (len(cord)/4))
     speak.text = speakarray[1]  #inform them of action              
     maryclient.send_goal_and_wait(speak) 
     baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
                                                        cord[k+2],cord[k+3]))
+    time.sleep(2)
+    #ptuclient.send_goal_and_wait(ptubwrd)
     speak.text = speakarray[2]   #ask them to move behind robot             
     maryclient.send_goal_and_wait(speak)                                                                                                                
     k = k +4 #move index to next set of cords
-    
+    print"moveing to waypoint"
     while not rospy.is_shutdown():                            
         if end == False:        
             if robotstate <3:
                 speak.text = speakarray[random.randint(3,7)]                
                 maryclient.send_goal_and_wait(speak) 
-                ptuclient.send_goal_and_wait(ptuforward)
                 rotatehead(0)
-                print("moving to goal") 
-                baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
+                print("moving to goal")
+                if seekinghuman:
+                    baseClient.send_goal(makegoal(cord[k],cord[k+1],
+                                                  cord[k+2],cord[k+3]))
+                    print baseClient.get_goal_status_text
+                    out = 0
+                    timer1 = time.time()
+                    while robotstate < 3 and out == 0:
+                        robotstate = baseClient.get_state()
+                        sqrt = 0.0
+                        if robotstate > 2:   
+                            print "in seeking human, current robot state = {}".format(robotstate)
+                            time.sleep(2)
+                            
+                        rospy.Subscriber("/human/transformed", PoseStamped, wherehuman)
+                        if (timer1+robotquickWaitTime) < time.time():
+                            out = 1
+                            baseClient.cancel_all_goals()
+                            print "could not see a human following, will stop and wait"
+                            speak.text = "could not see a human following, will stop and wait"                
+                            maryclient.send_goal_and_wait(speak) 
+                            robotstate = 3
+                        elif sqrt >humanMinDistance and sqrt <= humanMaxDistance:
+                            timer1 = time.time()
+                            sqrt = 0.0
+                            
+                        else:
+                            sqrt = 0.0
+                            #print "seeking human for {:.2f} seconds ".format(((timer1+robotquickWaitTime) - time.time()))
+                            
+                else:
+                    print "in else so not seeking human"
+                    baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
                                                        cord[k+2],cord[k+3]))    #send goal cords
-                robotstate = baseClient.get_state()#get the current state of robot
+                    robotstate = baseClient.get_state()#get the current state of robot
                  
             if robotstate == 3:
-                print'goal reached, waiting for human. \nCurrently at waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))
-                speak.text = speakarray[random.randint(8,10)]                
-                maryclient.send_goal_and_wait(speak)                 
+                if out < 1:
+                    print'goal reached, waiting for human. \nCurrently at waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))
+                    speak.text = speakarray[random.randint(8,10)]                
+                    maryclient.send_goal_and_wait(speak)
+                    print "check"
+                    print"out is = 0"
+                    time.sleep(2)
+                elif out > 0:
+                    print"dnt, out is = 1"
+                    time.sleep(2)
                 sqrt = 0.0
                 waitForHuman = True
                 timer = time.time()
                 robotstate=0
                 speak.text = speakarray[random.randint(11,13)]                
                 maryclient.send_goal_and_wait(speak) 
-                ptuclient.send_goal_and_wait(ptubwrd)
                 rotatehead(1)                
                 while waitForHuman:                  
-                    print "waiting for {:.2f} seconds ".format(((timer+robotWaitTime) - time.time()))
-                    rospy.Subscriber("/people_tracker/pose", PoseStamped, wherehuman)
-                    r.sleep()
-                                        
+                    #print "waiting for {:.2f} seconds ".format(((timer+robotWaitTime) - time.time()))
+                    rospy.Subscriber("/human/transformed", PoseStamped, wherehuman)
+                                                           
                     if sqrt >humanMinDistance and sqrt <= humanMaxDistance:
                         print 'human spotted at {}'.format(sqrt)
                         if len(cord)-1 > k+4: 
                            sqrt = 0.0
                            speak.text = speakarray[random.randint(18,21)]                
-                           maryclient.send_goal_and_wait(speak) 
-                           k = k +4 #move index to next set of cords
+                           maryclient.send_goal_and_wait(speak)
+                           if out < 1:
+                               k = k +4 #move index to next set of cords
+                               print 'out = 0'
+                           elif out > 0:
+                               print"dnt move k (forward), out is = 1"
+                               time.sleep(2)
+                           out = 0
                            print'next goal coords: X:{} Y:{} Z:{} W:{}'.format(cord[k],cord[k+1],cord[k+2],cord[k+3])
-                           print'moving to waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))                          
+                           print'moving to waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))
+                           seekinghuman = True
                         else:                            
                             print'the guiding has finished'
-                            end = True                        
+                            end = True
+                            seekinghuman = False
                         waitForHuman = False
                         
                     elif (timer+robotWaitTime) < time.time():
@@ -147,7 +196,14 @@ def robot_base():
                          maryclient.send_goal_and_wait(speak)
                          if  k-4 >= 0:
                              print"Robot will go back to prior waypoint and wait"
+                             
+#                             if out < 1:
                              k = k -4 #move index to prior set of cords
+#                                 print 'out = 0'
+#                             elif out > 0:
+#                                 print"dnt move k(backward), out is = 1"
+#                                 time.sleep(2)
+                             out = 1
                              print'next goal coords: X:{} Y:{} Z:{} W:{}'.format(cord[k],cord[k+1],cord[k+2],cord[k+3])
                              print'moving back to prior waypoint {}/{}'.format(((k+4)/4),(len(cord)/4))
                              speak.text = speakarray[random.randint(25,26)]                
@@ -157,15 +213,25 @@ def robot_base():
                              maryclient.send_goal_and_wait(speak)                              
                              print 'no human is following robot, will go back to start' 
                              end = True
+                         seekinghuman = False
                          waitForHuman = False
-                    else: 
-                        print 'waiting for human'               
+                    else:
+                        sqrt = 0.0
+                        #print 'waiting for human'               
                                       
         if robotstate == 4:
-            print'failed, retry- not implemented'
+            count = 0
+            if count < 5:
+                count = count + 1
+                baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
+                                                       cord[k+2],cord[k+3]))
+                robotstate = baseClient.get_state()
+            else:
+                print'failed, retry- not implemented'
+                speak.text = "i am stuck, need help"                
+                maryclient.send_goal_and_wait(speak)            
         if end:
             rotatehead(0)
-            ptuclient.send_goal_and_wait(ptuforward)
             if robotstate <3:
                 print'moving robot back to start'
                 speak.text = speakarray[random.randint(14,15)]                
@@ -176,6 +242,7 @@ def robot_base():
                 robotstate = baseClient.get_state() #get the current state of robot
                 
             if robotstate >=3:
+                 #ptuclient.send_goal_and_wait(ptuforward)
                  speak.text = speakarray[17]
                  maryclient.send_goal_and_wait(speak)
                  print'program end'

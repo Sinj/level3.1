@@ -7,10 +7,6 @@ import actionlib
 import numpy as np
 import mary_tts.msg
 import move_base_msgs.msg
-from geometry_msgs.msg import PoseStamped
-from move_base_msgs.msg import MoveBaseActionResult
-
-
     
 def makegoal(x,y,z,w): #makes move goal & return it 
     target = move_base_msgs.msg.MoveBaseGoal()
@@ -19,8 +15,7 @@ def makegoal(x,y,z,w): #makes move goal & return it
     target.target_pose.pose.position.y = y
     target.target_pose.pose.orientation.z = z
     target.target_pose.pose.orientation.w = w 
-    return target  
-      
+    return target        
        
 def robot_base():
     end = False
@@ -29,7 +24,7 @@ def robot_base():
     global i
     k=0# The index for cords
     speakfile = '/tospeak.txt'
-    cordfile = '/tospeak.txt'
+    cordfile = '/cords4.txt'
     robotstate = 0
     s=5 # seconds, used for wait    
     
@@ -68,14 +63,18 @@ def robot_base():
         if end == False:        
             if robotstate <3:
                 print("keep moving to goal")
+                speak.text = speakarray[random.randint(3,7)]                
+                maryclient.send_goal_and_wait(speak) 
                 baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
                                                        cord[k+2],cord[k+3]))    #send goal cords
                 robotstate = baseClient.get_state()#get the current state of robot
             if robotstate == 3:
                 print'goal reached, waiting for {} seconds. at waypoint {}/{}'.format(s,((k+4)/4),(len(cord)/4))
                 robotstate = 2
-                time.sleep(s)# waits for X seconds
-                print'k value before incroment {} and Lencord value {}'.format(k,len(cord))
+                speak.text = speakarray[random.randint(8,10)]                
+                maryclient.send_goal_and_wait(speak)                
+                time.sleep(s)# waits for X seconds                 
+                #print'k value before incroment {} and Lencord value {}'.format(k,len(cord))
                 if len(cord)-1 > k+4: 
                     k = k +4 #move index to next set of cords
                     print'next goal coords: X:{} Y:{} Z{}: W:{}'.format(cord[k],cord[k+1],cord[k+2],cord[k+3])
