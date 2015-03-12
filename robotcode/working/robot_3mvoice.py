@@ -46,7 +46,7 @@ def rotatehead(x):
 def robot_base():
     rospy.init_node('robot_base', anonymous=True)
     r = rospy.Rate(0.3) # .3hz
-    cordsfile = '/cords5.txt'
+    cordsfile = '/cords4.txt'
     speakfile = '/tospeak.txt'
     global sqrt
     robotstate = 0          # holds the state of the robot
@@ -64,8 +64,8 @@ def robot_base():
     baseClient = actionlib.SimpleActionClient('move_base',move_base_msgs.msg.MoveBaseAction)
     baseClient.wait_for_server()#
     print"making ptu clients"        #make PTU client
-    #ptuclient = actionlib.SimpleActionClient('SetPTUState',flir_pantilt_d46.msg.PtuGotoAction)    
-    #ptuclient.wait_for_server()
+    ptuclient = actionlib.SimpleActionClient('SetPTUState',flir_pantilt_d46.msg.PtuGotoAction)    
+    ptuclient.wait_for_server()
     print"making speaking clients"       #Make speaking client
     maryclient = actionlib.SimpleActionClient('speak',mary_tts.msg.maryttsAction)    
     maryclient.wait_for_server()
@@ -98,7 +98,7 @@ def robot_base():
     baseClient.send_goal_and_wait(makegoal(cord[k],cord[k+1],
                                                        cord[k+2],cord[k+3]))
     time.sleep(2)
-    #ptuclient.send_goal_and_wait(ptubwrd)
+    ptuclient.send_goal_and_wait(ptubwrd)
     speak.text = speakarray[2]   #ask them to move behind robot             
     maryclient.send_goal_and_wait(speak)                                                                                                                
     k = k +4 #move index to next set of cords
@@ -224,7 +224,7 @@ def robot_base():
                 robotstate = baseClient.get_state() #get the current state of robot
                 
             if robotstate >=3:
-                 #ptuclient.send_goal_and_wait(ptuforward)
+                 ptuclient.send_goal_and_wait(ptuforward)
                  speak.text = speakarray[17]
                  maryclient.send_goal_and_wait(speak)
                  print'program end'
