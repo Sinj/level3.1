@@ -215,6 +215,7 @@ def robot_base():
                  
                  #~~~~~
                  dlist.append('guide end, took {:.2f} seconds'.format(startimer - time.time()))
+                 dlist.append('guide end, took {:.2f} seconds'.format((startimer - time.time())/60))                 
                  dlist.append('=========== end ======== \n')
                  with open(os.path.dirname(os.path.realpath(__file__)) + '/Method2_stats.txt','a') as File:
                      for item in dlist:

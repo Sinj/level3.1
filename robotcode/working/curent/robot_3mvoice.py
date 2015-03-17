@@ -261,6 +261,7 @@ def robot_base():
                  maryclient.send_goal_and_wait(speak)
                  #~~~~~
                  dlist.append('guide end, took {:.2f} seconds'.format(startimer - time.time()))
+                 dlist.append('guide end, took {:.2f} seconds'.format((startimer - time.time())/60))                 
                  dlist.append('=========== end ======== \n')
                  with open(os.path.dirname(os.path.realpath(__file__)) + '/Method3_stats.txt','a') as File:
                      for item in dlist:
