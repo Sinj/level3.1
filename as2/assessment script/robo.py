@@ -67,7 +67,7 @@ class Braitenberg():
         ret,bw_imag = cv2.threshold(hsv_thresh,0,255,cv2.THRESH_BINARY)  
        #######################################################################
         # CODE GOES HERE
-        bw_imag/=255
+        bw_imag/=255 # divides hold image by 225
         twist_msg = Twist()
         print "====="
         #mean_leftim = numpy.mean(hsv_thresh[0:320, 0:240])
