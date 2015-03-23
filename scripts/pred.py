@@ -5,7 +5,7 @@ import rospy                                  # The ROS python bindings
 from geometry_msgs.msg import Twist           # The cmd_vel message type
 from sensor_msgs.msg import Image             # The message type of the image
 from sensor_msgs.msg import LaserScan  # The message type of the laser scan
-
+from kobuki_msgs.msg import BumperEvent
 from cv_bridge import CvBridge, CvBridgeError # OpenCV ROS functions
 import cv2                                    # OpenCV functions
 import numpy                                  # Matlab like functions to work on image
@@ -18,6 +18,8 @@ class Braitenberg():
         #rospy.loginfo("Starting node %s" % name)
         self.bridge = CvBridge()
         self.timer = time.time()
+        self.bumped = 0
+        self.bumpstate = 0
         self.checkstat = True
         self.donerun = True
         self.issafe = True       #- spin around at loaction till box seen
@@ -50,7 +52,20 @@ class Braitenberg():
             Twist,                          # The data type of the topic
             queue_size=1                    # Explicitly set to prevent a warining in ROS
         )
+        
+        self.Bumper_sub = rospy.Subscriber(  # Creating a subscriber listening to the Bumper
+                                    # The topic to which it should listend
+            '/turtlebot_2/turtlebot_2_kobuki_safety_controller/events/bumper',
+            BumperEvent,                      # The data type of the topic
+            callback=self.Bumper_callback,   # The callback function that is triggered when a new message arrives
+            queue_size=1                    # Disregard every message but the latest
+        )
 
+
+    def Bumper_callback(self, bumper):     
+        self.bumped = bumper.bumper
+        self.bumpstate = bumper.state
+        
     def image_callback(self, img):
         #rospy.loginfo("Received image of size: %i x %i" % (img.width,img.height))  # Just making sure we received something
         rate = rospy.Rate(10)
@@ -100,36 +115,59 @@ class Braitenberg():
 #        print 'wholeintensity = {}'.format(wholeintensity)
 #        print 'wholeintensityother = {}'.format(wholeintensityother)
 #        print 'test = {}'.format(test)
-#        print 'wholeintensity1 sum = {}'.format(wholeintensity1)
+        print 'wholeintensity1 sum = {}'.format(wholeintensity1)
 #        print '~~~~'
 #        print wholeintensity * 0.3
-        print (leftim - rightim)    
-        print'---'     
-        print 'L{}\n R{}'.format(leftim,rightim)
+#        print (leftim - rightim)    
+#        print'---'     
+#        print 'L{}\n R{}'.format(leftim,rightim)
+        print self.bumped
+        print self.bumpstate 
         
+        
+        
+        #check if seen
         if wholeintensity1 > 600:
             self.robotseen =True
         else:
             self.robotseen = False
-            
-        if self.robotseen:
-            if not self.iswall:
-                twist_msg.linear.x = 0.3
-                twist_msg.angular.z = (leftim - rightim) * numpy.pi 
-            else:
-                twist_msg.linear.x = 0.0
-                if leftim > rightim:
-                    twist_msg.angular.z = -1.5
-                else:
-                    twist_msg.angular.z = 1.5
-        else:
-            if not self.iswall:
-                twist_msg.linear.x = 0.3
-                twist_msg.angular.z = (leftim - rightim) * numpy.pi 
-            else:
-                twist_msg.linear.x = 0.0
+           
+         #check if bumoer is pressed  
+        if self.bumpstate > 0 and wholeintensity1 >= 9000:# check if the bumper is pres coz it hit prey
+            print 'pray caught'
+        elif self.bumpstate > 0 and wholeintensity1 < 9000:
+            twist_msg.linear.x = -0.15
+            if self.bumped  >=0:
                 twist_msg.angular.z = -1.5
-                #twist_msg.angular.z = self.turnsmallest
+            else:
+                twist_msg.angular.z = 1.5
+        else:
+            if self.robotseen and wholeintensity1 > 6000:
+                print 'in'
+                if not self.iswall:
+                    twist_msg.linear.x = 0.3
+                else:
+                    twist_msg.linear.x = 0.1
+                    twist_msg.angular.z = (leftim - rightim) * numpy.pi 
+            elif self.robotseen:
+                print 'out'
+                if not self.iswall:
+                    twist_msg.linear.x = 0.3
+                    twist_msg.angular.z = (leftim - rightim) * numpy.pi 
+                else:
+                    twist_msg.linear.x = 0.0
+                    if leftim > rightim:
+                        twist_msg.angular.z = -1.5
+                    else:
+                        twist_msg.angular.z = 1.5        
+            else:
+                if not self.iswall:
+                    twist_msg.linear.x = 0.3
+                    twist_msg.angular.z = (leftim - rightim) * numpy.pi 
+                else:
+                    twist_msg.linear.x = 0.0
+                    twist_msg.angular.z = self.turnsmallest
+                # need to add another state to find if you are close to the robot then turn off spin when close, might also want to add bumper
                 
 
         #twist_msg.linear.x = normalised_mean_intensity * 0.3
