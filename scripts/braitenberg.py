@@ -20,25 +20,25 @@ class Braitenberg():
         :param name: The name of the ros node
         """
 
-        rospy.loginfo("Starting node %s" % name)
+        #rospy.loginfo("Starting node %s" % name)
         self.bridge = CvBridge()            # Creatingan OpenCV bridge object used to create an OpenCV image from the ROS image
         cv2.namedWindow("Image window", 1)  # Opening a window to show the image
         cv2.startWindowThread()
 
         self.image_sub = rospy.Subscriber(  # Creating a subscriber listening to the kinect image topic
-            "/camera/rgb/image_color",      # The topic to which it should listened
+         "/turtlebot_2/camera/rgb/image_raw",      # The topic to which it should listened
             Image,                          # The data type of the topic
             callback=self.image_callback,   # The callback function that is triggered when a new message arrives
             queue_size=1                    # Disregard every message but the latest
         )
         self.cmd_vel_pub = rospy.Publisher( # The same as previously
-            "/cmd_vel",                     # The topic to which it should publish
+            "/turtlebot_2/cmd_vel",                     # The topic to which it should publish
             Twist,                          # The data type of the topic
             queue_size=1                    # Explicitly set to prevent a warining in ROS
         )
 
     def image_callback(self, img):
-        rospy.loginfo("Received image of size: %i x %i" % (img.width,img.height))  # Just making sure we received something
+        #rospy.loginfo("Received image of size: %i x %i" % (img.width,img.height))  # Just making sure we received something
 
         try:
             cv_image = self.bridge.imgmsg_to_cv2(img, "bgr8")  # Convert to OpenCV image 
@@ -54,10 +54,10 @@ class Braitenberg():
         kernel = numpy.ones((2,2),numpy.uint8) #make structure
         hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_OPEN, kernel)# Erosion then Dilation
         hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
-
-        print numpy.mean(hsv_img[:, :, 0])
-        print numpy.mean(hsv_img[:, :, 1])
-        print numpy.mean(hsv_img[:, :, 2])            
+#
+#        print numpy.mean(hsv_img[:, :, 0])
+#        print numpy.mean(hsv_img[:, :, 1])
+#        print numpy.mean(hsv_img[:, :, 2])            
             
         ###############below do magic filtering with image##########
             
