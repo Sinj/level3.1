@@ -85,7 +85,7 @@ class Braitenberg():
         #mean_rightim = numpy.mean(hsv_thresh[320:640, 240:480])
        
         wholeintensity = numpy.mean(hsv_thresh)
-        leftim = numpy.mean(hsv_thresh[:, 0:320])/wholeintensity
+        leftim = numpy.mean(hsv_thresh[:, 0:320])/wholeintensity# gets the percetage.. ?
         rightim = numpy.mean(hsv_thresh[:, 320:640])/wholeintensity
         
         wholeintensity1 = numpy.sum(hsv_thresh) 
@@ -100,7 +100,7 @@ class Braitenberg():
             if wholeintensity1 > 150: #200# if pred seen and not runing = change flag
                 print 'robot seen' 
                 self.issafe = False
-                self.timer = self.timer + 40
+                self.timer = self.timer + 60
             else:
                 print 'all clear' 
                 self.issafe = True
@@ -116,7 +116,7 @@ class Braitenberg():
                     else:
                         twist_msg.angular.z = 0.0 
                 elif self.iswall:
-                    twist_msg.linear.x = -0.06
+                    twist_msg.linear.x = -0.08
                     twist_msg.angular.z = self.turnsmallest
             else:
                 twist_msg.linear.x = 0
@@ -132,8 +132,8 @@ class Braitenberg():
             print'in time'
         else:
             self.isrun = False
-            print self.timer
-            print time.time()
+#            print self.timer
+#            print time.time()
             
                 
         #######################################################################
@@ -158,7 +158,7 @@ class Braitenberg():
         elif leftside > rightside:
             self.turnsmallest = (numpy.pi/4)*-1
         else:
-            self.turnsmallest = numpy.pi           # print 'turn right'
+            self.turnsmallest = numpy.pi #print          
         
         min_distance = numpy.nanmin(ranges)  # Using numpy's nanmin function to find the minimal value and ignore nan values
         if min_distance < 0.95:                    # If the robot is close, then
@@ -166,12 +166,7 @@ class Braitenberg():
         else:
             self.iswall = False
              
-   #note to self, dnt need to make it binardy, just divide
-   # plan, hav this meth hand the seeing of the robot, the rotoing of it self but let laser hand the moving" runway"
-
-# The block below will be executed when the python file is executed
-# __name__ and __main__ are built-in python variables and need to start and end with *two* underscores
 if __name__ == '__main__':
-    rospy.init_node("braitenberg")     # Create a node of name braitenberg
-    b = Braitenberg(rospy.get_name())  # Create an instance of above class
-    rospy.spin()                       # Function to keep the node running until terminated via Ctrl+C
+    rospy.init_node("braitenberg")
+    b = Braitenberg(rospy.get_name())  
+    rospy.spin()                       
