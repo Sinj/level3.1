@@ -100,7 +100,9 @@ class Braitenberg():
         
         hsv_thresh/=255 # divides whole image by 225
         twist_msg = Twist()
-       
+#       sum_leftim = numpy.sum(bw_img[:, 0:215])
+#        sum_midim = numpy.sum(bw_img[:, 215:425])
+#        sum_rightim = numpy.sum(bw_img[:, 425:640])       
         wholeintensity = numpy.mean(hsv_thresh)
         leftim = numpy.mean(hsv_thresh[:, 0:320])#/wholeintensity
         rightim = numpy.mean(hsv_thresh[:, 320:640])#/wholeintensity
