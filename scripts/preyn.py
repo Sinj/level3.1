@@ -19,7 +19,7 @@ class Braitenberg():
         self.bridge = CvBridge()
         self.timer = time.time()
         self.checkstat = True
-        self.donerun = True
+        self.turn =  True
         self.issafe = True       #- spin around at loaction till box seen
         self.turnsmallest = 0.0        
         self.iswall = False     #- if see on left : turn 140 deg and run away else :turn -140 deg, set run away to true
@@ -30,31 +30,31 @@ class Braitenberg():
         #"/camera/rgb/image_color"
         #"/turtlebot_1/camera/rgb/image_raw"
         self.image_sub = rospy.Subscriber(  # Creating a subscriber listening to the kinect image topic
-            #"/camera/rgb/image_color", # The topic to which it should listened
-            "/turtlebot_2/camera/rgb/image_raw",
+            "/camera/rgb/image_color", # The topic to which it should listened
+            #"/turtlebot_2/camera/rgb/image_raw",
             Image,                          # The data type of the topic
             callback=self.image_callback,   # The callback function that is triggered when a new message arrives
             queue_size=1                    # Disregard every message but the latest
         )
         self.laser_sub = rospy.Subscriber(  # Creating a subscriber listening to the laser scans
-            #'/scan',                        # The topic to which it should listend
-            '/turtlebot_2/scan',
+            '/scan',                        # The topic to which it should listend
+            #'/turtlebot_2/scan',
             LaserScan,                      # The data type of the topic
             callback=self.laser_callback,   # The callback function that is triggered when a new message arrives
             queue_size=1                    # Disregard every message but the latest
         )
         
         self.cmd_vel_pub = rospy.Publisher( # The same as previously
-            #"/cmd_vel",                     # The topic to which it should publish
-            "/turtlebot_2/cmd_vel",
+            "/cmd_vel",                     # The topic to which it should publish
+            #"/turtlebot_2/cmd_vel",
             Twist,                          # The data type of the topic
             queue_size=1                    # Explicitly set to prevent a warining in ROS
         )
-
+        
+        
     def image_callback(self, img):
         #rospy.loginfo("Received image of size: %i x %i" % (img.width,img.height))  # Just making sure we received something
         rate = rospy.Rate(10)
-        rotate = False
         try:
             cv_image = self.bridge.imgmsg_to_cv2(img, "bgr8")  # Convert to OpenCV image 
         except CvBridgeError, e:
@@ -62,23 +62,19 @@ class Braitenberg():
         #chance the below colour thing to the hvs 
         hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV) #get image
         
-#        hsv_thresh = cv2.inRange(hsv_img,
-#                                 numpy.array((65, 120, 0)),#0,220,0
-#                                 numpy.array((100, 170, 255)))# get  from range-150,255,255
-
         hsv_thresh = cv2.inRange(hsv_img,
-                                 numpy.array((0, 220, 0)),
-                                 numpy.array((150, 255, 255)))
+                                 numpy.array((65, 120, 0)),#0,220,0
+                                 numpy.array((100, 170, 255)))# get  from range-150,255,255
+
+#        hsv_thresh = cv2.inRange(hsv_img,
+#                                 numpy.array((0, 220, 0)),
+#                                 numpy.array((150, 255, 255)))
                                
         hsv_thresh = cv2.medianBlur( hsv_thresh, 3)#medium filter
         kernel = numpy.ones((2,2),numpy.uint8) #make structure
         hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_OPEN, kernel)# Erosion then Dilation
         hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
         hsv_thresh1 = hsv_thresh
-#        print numpy.mean(hsv_img[:, :, 0])
-#        print numpy.mean(hsv_img[:, :, 1])
-#        print numpy.mean(hsv_img[:, :, 2])
-        #ret,bitimage = cv2.threshold(hsv_img,0,255,cv2.THRESH_BINARY)           
         cv2.imshow("Image window", hsv_thresh)    
         ret,hsv_thresh1 = cv2.threshold(hsv_thresh,0,255,cv2.THRESH_BINARY)  
         
@@ -96,36 +92,31 @@ class Braitenberg():
         
         if self.isrun:
             print'running'
+            if wholeintensity1 > 150:
+                self.turn = True
+            else:
+                self.turn = False
         else:
-            if wholeintensity1 > 600: #200# if pred seen and not runing = change flag
+            if wholeintensity1 > 150: #200# if pred seen and not runing = change flag
                 print 'robot seen' 
                 self.issafe = False
+                self.timer = self.timer + 40
             else:
                 print 'all clear' 
                 self.issafe = True
-            
-        # problem is that it is not spotting the robot quick enough, 
-#        if not self.issafe:
-#            print'rotate to safty'
-#            self.isrun = True
-#            if leftim > rightim:
-#                twist_msg.angular.z = (2*numpy.pi)/3 # 120deg 
-#            else:
-#                twist_msg.angular.z = ((2*numpy.pi)/3)*-1 #neg 120deg  
-#            self.cmd_vel_pub.publish(twist_msg)     # Publishig the twist message
-#            rate.sleep()                         # Sleep to ensure rate of 10hz     
-#                    
-#        elif self.issafe == True: 
-#            twist_msg.angular.z = numpy.pi/4
-#            self.isrun = False
             
         if not self.issafe:
             if self.isrun:
                 if not self.iswall:
                     twist_msg.linear.x = 0.3
-                    twist_msg.angular.z = 0.0 
+                    if self.turn and leftim > rightim:
+                        twist_msg.angular.z = (numpy.pi/2)*1 
+                    elif self.turn and leftim < rightim:
+                        twist_msg.angular.z = numpy.pi/2    
+                    else:
+                        twist_msg.angular.z = 0.0 
                 elif self.iswall:
-                    twist_msg.linear.x = 0.01
+                    twist_msg.linear.x = -0.06
                     twist_msg.angular.z = self.turnsmallest
             else:
                 twist_msg.linear.x = 0
@@ -134,34 +125,17 @@ class Braitenberg():
                 rate.sleep()
                 self.isrun = True
         else:
-            twist_msg.angular.z = numpy.pi/4
+            twist_msg.angular.z = numpy.pi/2
             self.isrun = False
             
-                
-        
-        # wall avoidance
-#        self.timer = time.time();
-#        if self.isrun:
-#            while (self.timer + 20) > time.time() and not rospy.is_shutdown():
-#                print "waiting for {:.2f} seconds ".format(((self.timer+20) - time.time()))
-#                if not self.iswall:
-#                    twist_msg.linear.x = 0.3
-#                    twist_msg.angular.z = 0.0 
-#                elif self.iswall:
-#                    twist_msg.linear.x = 0.0
-#                    twist_msg.angular.z = self.turnsmallest
-#                self.cmd_vel_pub.publish(twist_msg)     # Publishig the twist message
-#                rate.sleep()                         # Sleep to ensure rate of 10hz 
-#            self.isrun = False
-
-        
-
-
-
-        
-      
-       
+        if self.timer >= time.time():
+            print'in time'
+        else:
+            self.isrun = False
+            print self.timer
+            print time.time()
             
+                
         #######################################################################
 
 
