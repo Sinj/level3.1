@@ -14,10 +14,10 @@ class image_converter:
         cv2.namedWindow("Image window", 1)
         cv2.startWindowThread()
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber("/turtlebot_1/camera/rgb/image_raw",
-                                          Image, self.callback)#"/camera/rgb/image_color"
+        self.image_sub = rospy.Subscriber("/camera/rgb/image_color",
+                                          Image, self.callback)
         
-#        self.image_sub = rospy.Subscriber("/turtlebot_1/camera/rgb/image_raw",
+#        self.image_sub = rospy.Subscriber("/turtlebot_2/camera/rgb/image_raw",
 #                                         Image, self.callback)
 
     def callback(self, data):
@@ -26,28 +26,51 @@ class image_converter:
         except CvBridgeError, e:
             print e
 
-        
+#        bgr_thresh = cv2.inRange(cv_image,
+#                                 numpy.array((200, 150, 150)),
+#                                 numpy.array((255, 255, 255)))
 #----------------------------------------------------------------------------\/
-        hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV) #get image
+        hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         hsv_thresh = cv2.inRange(hsv_img,
-                                 numpy.array((65, 120, 0)),#
+                                 numpy.array((65, 120, 0)),
                                  numpy.array((100, 170, 255)))
-                               
-#       hsv_thresh = cv2.medianBlur( hsv_thresh, 3)
-        kernel = numpy.ones((2,2),numpy.uint8) #make structure
-        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_OPEN, kernel)# Erosion then Dilation
-        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
+        
+#        hsv_thresh = cv2.inRange(hsv_img,
+#                            numpy.array((0, 220, 0)),
+#                            numpy.array((150, 255, 255)))
+                                 
+#        hsv_thresh = cv2.medianBlur( hsv_thresh, 3)
+        kernel = numpy.ones((2,2),numpy.uint8)
+        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_OPEN, kernel)
+        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)
+        
+        ret, bw_img = cv2.threshold(hsv_thresh,0,255,cv2.THRESH_BINARY)
+              
+#        for x in range(0, 480):
+#            for y in range(0, 640):
+#                if bw_img[x, y] > 0:
+#                    bw_img[x, y] = 1
+#                              
+        bw_img = numpy.divide(bw_img, 255)
+        a = numpy.mean(bw_img[:, 0:320])
+        b = numpy.mean(bw_img[:, 320:640])
+        
+        print bw_img
+        print a
+        print b
 
-        print numpy.mean(hsv_img[:, :, 0])
-        print numpy.mean(hsv_img[:, :, 1])
-        print numpy.mean(hsv_img[:, :, 2])
-        ret,bitimage = cv2.threshold(hsv_img,0,255,cv2.THRESH_BINARY)
-        
-        
-#==========================================================================
-        
-#====================================================================================
-      
+#        bgr_contours, hierachy = cv2.findContours(bgr_thresh.copy(),
+#                                                  cv2.RETR_TREE,
+#                                                  cv2.CHAIN_APPROX_SIMPLE)
+#
+#        hsv_contours, hierachy = cv2.findContours(hsv_thresh.copy(),
+#                                                  cv2.RETR_TREE,
+#                                                  cv2.CHAIN_APPROX_SIMPLE)
+##====================================================================================
+#        for c in hsv_contours:
+#            a = cv2.contourArea(c)
+#            if a > 100.0:
+#                cv2.drawContours(cv_image, c, -1, (255, 0, 0))
                 
 
         print '===='

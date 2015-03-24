@@ -80,17 +80,17 @@ class Preditor():
         hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV) #get image
         
         hsv_thresh = cv2.inRange(hsv_img,
-                                 numpy.array((65, 120, 0)),#0,220,0
-                                 numpy.array((100, 170, 255)))# get  from range-150,255,255
+                                 numpy.array((50, 65, 0)),#0,220,0
+                                 numpy.array((100, 255, 255)))# get  from range-150,255,255
 
 #        hsv_thresh = cv2.inRange(hsv_img,
 #                                 numpy.array((0, 220, 0)),
 #                                 numpy.array((150, 255, 255)))
                                
-        hsv_thresh = cv2.medianBlur( hsv_thresh, 3)#medium filter
-        kernel = numpy.ones((2,2),numpy.uint8) #make structure
+        #hsv_thresh = cv2.medianBlur( hsv_thresh, 3)#medium filter
+        kernel = numpy.ones((5,5),numpy.uint8) #make structure
         hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_OPEN, kernel)# Erosion then Dilation
-        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
+        #hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
         hsv_thresh1 = hsv_thresh
 #        print numpy.mean(hsv_img[:, :, 0])
 #        print numpy.mean(hsv_img[:, :, 1])
@@ -118,21 +118,23 @@ class Preditor():
                 self.robotseen = False
           
 
-        if self.robotseen and self.min_distance <=1.2:
-       # go in to while loop, move foward till X seconds or bumper hit
-             if self.checkstat:
-                 self.timer = self.timer + 9
-                 self.checkstat = False
-             print 'in'
-             twist_msg.linear.x = 0.3
-             twist_msg.angular.z = 0
+#        if self.robotseen and self.min_distance <=1.2:
+#       # go in to while loop, move foward till X seconds or bumper hit
+#             if self.checkstat:
+#                 self.timer = self.timer + 9
+#                 self.checkstat = False
+#             print 'in'
+#             twist_msg.linear.x = 0.3
+#             twist_msg.angular.z = 0
              
                 
-        elif self.robotseen and self.min_distance > 1.2:
+        if self.robotseen:# and self.min_distance > 1.2:
             #print 'out'
-            self.robotseen =True
+            self.timer = self.timer + 9
+            self.checkstat = False
             if not self.iswall:
                 print 'out'
+                
                 twist_msg.linear.x = 0.3
                 if midim > leftim and midim > rightim:
                     twist_msg.angular.z = 0
@@ -155,10 +157,11 @@ class Preditor():
                 twist_msg.linear.x = 0.0
                 twist_msg.angular.z = self.turnsmallest
                 
-        if self.timer <= time.time() and self.robotseen:
+        if self.timer < time.time() and self.robotseen:
             print' time'
-        elif self.timer <= time.time() and self.robotseen:
             self.checkstat = True
+        elif self.timer > time.time() and self.robotseen:
+            
             print'out time'
 #        else:
 #            self.isrun = False

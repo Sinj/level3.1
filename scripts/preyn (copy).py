@@ -63,17 +63,17 @@ class Braitenberg():
         hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV) #get image
         
         hsv_thresh = cv2.inRange(hsv_img,
-                                 numpy.array((65, 120, 0)),#0,220,0
-                                 numpy.array((100, 170, 255)))# get  from range-150,255,255
+                                 numpy.array((50, 65, 0)),#0,220,0
+                                 numpy.array((100, 255, 255)))# get  from range-150,255,255
 
 #        hsv_thresh = cv2.inRange(hsv_img,
 #                                 numpy.array((0, 220, 0)),
 #                                 numpy.array((150, 255, 255)))
                                
-        hsv_thresh = cv2.medianBlur( hsv_thresh, 3)#medium filter
-        kernel = numpy.ones((2,2),numpy.uint8) #make structure
+#        hsv_thresh = cv2.medianBlur( hsv_thresh, 3)#medium filter
+        kernel = numpy.ones((5,5),numpy.uint8) #make structure
         hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_OPEN, kernel)# Erosion then Dilation
-        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
+#        hsv_thresh = cv2.morphologyEx(hsv_thresh, cv2.MORPH_CLOSE, kernel)# Dilation then Erosion
         hsv_thresh1 = hsv_thresh
         cv2.imshow("Image window", hsv_thresh)    
         ret,hsv_thresh1 = cv2.threshold(hsv_thresh,0,255,cv2.THRESH_BINARY)  
@@ -99,7 +99,7 @@ class Braitenberg():
             else:
                 self.turn = False
         else:
-            if wholeintensity1 > 150: #200# if pred seen and not runing = change flag
+            if wholeintensity1 > 80: #200# if pred seen and not runing = change flag
                 print 'robot seen' 
                 self.issafe = False
                 self.timer = self.timer + 40
