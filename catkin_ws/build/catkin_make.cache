@@ -1,0 +1,2 @@
+commanding_velocity
+-DCATKIN_DEVEL_PREFIX=/home/sinj14/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/sinj14/catkin_ws/install -G Unix Makefiles

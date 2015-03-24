@@ -1,0 +1,12 @@
+/home/sinj14/catkin_ws/build/CMakeFiles/clean_test_results.dir
+/home/sinj14/catkin_ws/build/CMakeFiles/doxygen.dir
+/home/sinj14/catkin_ws/build/commanding_velocity/CMakeFiles/geometry_msgs_generate_messages_cpp.dir
+/home/sinj14/catkin_ws/build/commanding_velocity/CMakeFiles/geometry_msgs_generate_messages_lisp.dir
+/home/sinj14/catkin_ws/build/commanding_velocity/CMakeFiles/geometry_msgs_generate_messages_py.dir
+/home/sinj14/catkin_ws/build/gtest/CMakeFiles/gtest.dir
+/home/sinj14/catkin_ws/build/gtest/CMakeFiles/gtest_main.dir
+/home/sinj14/catkin_ws/build/CMakeFiles/run_tests.dir
+/home/sinj14/catkin_ws/build/commanding_velocity/CMakeFiles/std_msgs_generate_messages_cpp.dir
+/home/sinj14/catkin_ws/build/commanding_velocity/CMakeFiles/std_msgs_generate_messages_lisp.dir
+/home/sinj14/catkin_ws/build/commanding_velocity/CMakeFiles/std_msgs_generate_messages_py.dir
+/home/sinj14/catkin_ws/build/CMakeFiles/tests.dir

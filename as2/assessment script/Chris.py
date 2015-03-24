@@ -83,9 +83,7 @@ class Braitenberg():
 
         #get mean of left half of image 
         bw_img/= 255
-        sum_leftim = numpy.sum(bw_img[:, 0:215])
-        sum_midim = numpy.sum(bw_img[:, 215:425])
-        sum_rightim = numpy.sum(bw_img[:, 425:640])
+ 
         nsum_leftim = sum_leftim/numpy.sum (bw_img)
         nsum_midim = sum_midim/numpy.sum (bw_img)
         nsum_rightim = sum_rightim/numpy.sum (bw_img)

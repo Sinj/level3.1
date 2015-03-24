@@ -1,0 +1,8 @@
+prefix=/home/sinj14/catkin_ws/install
+
+Name: commanding_velocity
+Description: Description of commanding_velocity
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/sinj14/catkin_ws/install/lib 
+Requires: 
