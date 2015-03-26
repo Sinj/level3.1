@@ -99,7 +99,7 @@ class Braitenberg():
             else:
                 self.turn = False
         else:
-            if wholeintensity1 > 80: #200# if pred seen and not runing = change flag
+            if wholeintensity1 > 150: #200# if pred seen and not runing = change flag
                 print 'robot seen' 
                 self.issafe = False
                 self.timer = self.timer + 40
@@ -112,9 +112,9 @@ class Braitenberg():
                 if not self.iswall:
                     twist_msg.linear.x = 0.3
                     if self.turn and leftim > rightim:
-                        twist_msg.angular.z = (numpy.pi/2)*1 
+                        twist_msg.angular.z = ((5*numpy.pi)/6)*-1 
                     elif self.turn and leftim < rightim:
-                        twist_msg.angular.z = numpy.pi/2    
+                        twist_msg.angular.z = (5*numpy.pi)/6   
                     else:
                         twist_msg.angular.z = 0.0 
                 elif self.iswall:
@@ -122,7 +122,7 @@ class Braitenberg():
                     twist_msg.angular.z = self.turnsmallest
             else:
                 twist_msg.linear.x = 0
-                twist_msg.angular.z = numpy.pi #neg 120deg
+                twist_msg.angular.z = (5*numpy.pi)/6 #neg 150deg
                 self.cmd_vel_pub.publish(twist_msg)
                 rate.sleep()
                 self.isrun = True
