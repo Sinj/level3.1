@@ -5,7 +5,7 @@ import rospy                                  # The ROS python bindings
 from geometry_msgs.msg import Twist           # The cmd_vel message type
 from sensor_msgs.msg import Image             # The message type of the image
 from sensor_msgs.msg import LaserScan  # The message type of the laser scan
-
+from kobuki_msgs.msg import BumperEvent
 from cv_bridge import CvBridge, CvBridgeError # OpenCV ROS functions
 import cv2                                    # OpenCV functions
 import numpy                                  # Matlab like functions to work on image
@@ -20,6 +20,8 @@ class Braitenberg():
         self.timer = time.time()
         self.checkstat = True
         self.turn =  True
+        self.bumped = False
+        self.bumpstate =  0
         self.issafe = True       #- spin around at loaction till box seen
         self.turnsmallest = 0.0        
         self.iswall = False     #- if see on left : turn 140 deg and run away else :turn -140 deg, set run away to true
@@ -51,6 +53,19 @@ class Braitenberg():
             queue_size=1                    # Explicitly set to prevent a warining in ROS
         )
         
+        self.Bumper_sub = rospy.Subscriber(  # Creating a subscriber listening to the Bumper
+            '/mobile_base/events/bumper',                       # The topic to which it should listend
+            #'/turtlebot_2/turtlebot_2_kobuki_safety_controller/events/bumper',
+            BumperEvent,                      # The data type of the topic
+            callback=self.Bumper_callback,   # The callback function that is triggered when a new message arrives
+            queue_size=1                    # Disregard every message but the latest
+        )
+
+
+    def Bumper_callback(self, bumper):     
+        if bumper.bumper > 0:
+            self.bumped = True
+        self.bumpstate = bumper.state        
         
     def image_callback(self, img):
         #rospy.loginfo("Received image of size: %i x %i" % (img.width,img.height))  # Just making sure we received something
@@ -136,6 +151,11 @@ class Braitenberg():
             self.isrun = False
 #            print self.timer
 #            print time.time()
+    
+        if self.bumpstate:
+            twist_msg.linear.x = 0.0
+            twist_msg.angular.z = 0
+            print 'bumper hit'
             
                 
         #######################################################################
